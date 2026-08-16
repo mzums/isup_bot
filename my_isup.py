@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 import aiohttp
 import discord
+from discord.ext import tasks
 
 
 load_dotenv(override=True)
@@ -21,6 +22,17 @@ client = discord.Client(intents=intents)
 async def on_ready():
     print(f"BOT ONLINE: {client.user}")
     print(f"Guilds: {len(client.guilds)}")
+
+    if not hourly_check.is_running():
+        hourly_check.start()
+
+
+@tasks.loop(hours=1)
+async def hourly_check():
+    print("Running automatic check...")
+    result = await check()
+    channel = client.get_channel(channel_id)
+    await channel.send(result)
 
 
 @client.event
@@ -74,11 +86,6 @@ async def check():
 
 
 @client.event
-async def on_ready():
-    print(f"We have logged in as {client.user}")
-
-
-@client.event
 async def on_message(message):
     if message.author == client.user:
         return
@@ -89,6 +96,3 @@ async def on_message(message):
 
 
 client.run(bot_token)
-
-print("Token loaded:", bool(bot_token))
-print("Token length:", len(bot_token))
